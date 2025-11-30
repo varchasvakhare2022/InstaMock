@@ -118,14 +118,38 @@ const LivePreview = ({ jsxCode }: LivePreviewProps) => {
         }
       }
 
-      // Escape the code for embedding in HTML template literal
-      // Must escape backticks and template literal expressions to prevent syntax errors
-      const escapedCode = code
-        .replace(/\\/g, '\\\\')     // Escape backslashes first (must be first!)
-        .replace(/`/g, '\\`')        // Escape backticks (critical for template literals)
-        .replace(/\${/g, '\\${')     // Escape template literal expressions
-        .replace(/\r\n/g, '\n')      // Normalize line endings
-        .replace(/\r/g, '\n')        // Normalize line endings
+      // Encode code as Base64 to avoid all escaping issues
+      function base64Encode(str: string): string {
+        try {
+          return btoa(unescape(encodeURIComponent(str)))
+        } catch (e) {
+          // Fallback for older browsers
+          return btoa(str)
+        }
+      }
+
+      function base64Decode(str: string): string {
+        try {
+          return decodeURIComponent(escape(atob(str)))
+        } catch (e) {
+          return atob(str)
+        }
+      }
+
+      // Wrap code to ensure component is available on window
+      const wrappedCode = `(function() {
+  const { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext } = React;
+  
+  ${code.replace(/export\s+default\s+/g, '').trim()}
+  
+  // Ensure component is available globally
+  if (typeof ${componentName} !== 'undefined') {
+    window['${componentName}'] = ${componentName};
+  }
+})();`
+
+      const encodedCode = base64Encode(wrappedCode)
+      const encodedComponentName = base64Encode(componentName)
 
       // Create HTML content with all dependencies
       const htmlContent = `<!DOCTYPE html>
@@ -157,46 +181,100 @@ const LivePreview = ({ jsxCode }: LivePreviewProps) => {
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext } = React;
-    
-    try {
-      ${escapedCode}
-      
-      // Verify component exists
-      if (typeof ${componentName} === 'undefined') {
-        const available = Object.keys(window).filter(k => 
-          typeof window[k] === 'function' && k[0] === k[0].toUpperCase()
-        ).join(', ');
-        throw new Error('Component "${componentName}" is not defined. Available: ' + (available || 'none'));
+  <script id="encoded-data" type="text/plain">
+    {"code":"${encodedCode}","component":"${encodedComponentName}"}
+  </script>
+  <script type="text/javascript">
+    (function() {
+      function base64Decode(str) {
+        try {
+          return decodeURIComponent(escape(atob(str)));
+        } catch (e) {
+          return atob(str);
+        }
       }
       
-      // Render the component
-      const rootElement = document.getElementById('root');
-      if (!rootElement) {
-        throw new Error('Root element not found');
+      const { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext } = React;
+      
+      const dataScript = document.getElementById('encoded-data');
+      const data = JSON.parse(dataScript.textContent);
+      const jsxCode = base64Decode(data.code);
+      const componentName = base64Decode(data.component);
+      
+      // Transform JSX using Babel
+      const transformedCode = Babel.transform(jsxCode, {
+        presets: ['react', 'env']
+      }).code;
+      
+      // Execute the transformed code
+      eval(transformedCode);
+      
+      // Store component name for later use
+      window.__PREVIEW_COMPONENT_NAME__ = componentName;
+    })();
+  </script>
+  <script type="text/javascript">
+    (function() {
+      function base64Decode(str) {
+        try {
+          return decodeURIComponent(escape(atob(str)));
+        } catch (e) {
+          return atob(str);
+        }
       }
       
-      const root = ReactDOM.createRoot(rootElement);
-      root.render(React.createElement(${componentName}));
-      
-      console.log('Preview: Component "${componentName}" rendered successfully');
-    } catch (err) {
-      const errorMsg = err.message || 'Unknown error';
-      const errorStack = err.stack || '';
-      const rootEl = document.getElementById('root');
-      if (rootEl) {
-        rootEl.innerHTML = 
-          '<div style="padding: 20px; color: #dc2626; background: #fee2e2; border-radius: 8px; border: 1px solid #fecaca; font-family: monospace; font-size: 12px; line-height: 1.5;">' +
-          '<strong style="display: block; margin-bottom: 8px;">Preview Error:</strong>' + 
-          '<div style="margin-bottom: 12px;">' + errorMsg + '</div>' +
-          (errorStack ? '<details style="margin-top: 8px;"><summary style="cursor: pointer; color: #991b1b;">Stack trace</summary><pre style="font-size: 10px; margin-top: 8px; white-space: pre-wrap; word-break: break-all;">' + errorStack.substring(0, 500) + '</pre></details>' : '') +
-          '<div style="margin-top: 12px; font-size: 11px; color: #991b1b;">Check browser console for more details</div></div>';
+      try {
+        const dataScript = document.getElementById('encoded-data');
+        const data = JSON.parse(dataScript.textContent);
+        const componentName = base64Decode(data.component);
+        
+        // Wait a bit for code execution to complete
+        setTimeout(function() {
+          try {
+            const ComponentToRender = window[componentName];
+            
+            if (!ComponentToRender || typeof ComponentToRender !== 'function') {
+              const available = Object.keys(window).filter(k => 
+                typeof window[k] === 'function' && k[0] === k[0].toUpperCase()
+              ).join(', ');
+              throw new Error('Component "' + componentName + '" is not defined. Available: ' + (available || 'none'));
+            }
+            
+            // Render the component
+            const rootElement = document.getElementById('root');
+            if (!rootElement) {
+              throw new Error('Root element not found');
+            }
+            
+            const root = ReactDOM.createRoot(rootElement);
+            root.render(React.createElement(ComponentToRender));
+            
+            console.log('Preview: Component "' + componentName + '" rendered successfully');
+          } catch (err) {
+            const errorMsg = err.message || 'Unknown error';
+            const errorStack = err.stack || '';
+            const rootEl = document.getElementById('root');
+            if (rootEl) {
+              const safeErrorMsg = String(errorMsg).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+              const safeErrorStack = errorStack ? String(errorStack).substring(0, 500).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') : '';
+              rootEl.innerHTML = 
+                '<div style="padding: 20px; color: #dc2626; background: #fee2e2; border-radius: 8px; border: 1px solid #fecaca; font-family: monospace; font-size: 12px; line-height: 1.5;">' +
+                '<strong style="display: block; margin-bottom: 8px;">Preview Error:</strong>' + 
+                '<div style="margin-bottom: 12px;">' + safeErrorMsg + '</div>' +
+                (safeErrorStack ? '<details style="margin-top: 8px;"><summary style="cursor: pointer; color: #991b1b;">Stack trace</summary><pre style="font-size: 10px; margin-top: 8px; white-space: pre-wrap; word-break: break-all;">' + safeErrorStack + '</pre></details>' : '') +
+                '<div style="margin-top: 12px; font-size: 11px; color: #991b1b;">Check browser console for more details</div></div>';
+            }
+            console.error('Preview error:', err);
+          }
+        }, 200);
+      } catch (err) {
+        const rootEl = document.getElementById('root');
+        if (rootEl) {
+          rootEl.innerHTML = '<div style="padding: 20px; color: #dc2626; background: #fee2e2; border-radius: 8px;">Preview Error: ' + String(err.message || 'Unknown error').replace(/</g, '&lt;') + '</div>';
+        }
+        console.error('Preview setup error:', err);
       }
-      console.error('Preview error:', err);
-      console.error('Component name:', '${componentName}');
-      console.error('Code preview (first 500 chars):', \`${code.substring(0, 500).replace(/`/g, '\\`').replace(/\${/g, '\\${')}\`);
-    }
+    })();
   </script>
 </body>
 </html>`
