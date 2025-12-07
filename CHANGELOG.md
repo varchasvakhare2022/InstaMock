@@ -11,3 +11,4 @@ All notable changes to this project will be documented in this file.
 - Frontend framework setup
 - Backend API structure
 - Docker configuration for development
+- Database schema and migrations
