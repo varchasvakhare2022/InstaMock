@@ -12,3 +12,4 @@ All notable changes to this project will be documented in this file.
 - Backend API structure
 - Docker configuration for development
 - Database schema and migrations
+- User authentication system
