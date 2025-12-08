@@ -14,3 +14,4 @@ All notable changes to this project will be documented in this file.
 - Database schema and migrations
 - User authentication system
 - UI components library
+- API documentation
