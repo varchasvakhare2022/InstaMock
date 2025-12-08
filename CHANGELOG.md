@@ -13,3 +13,4 @@ All notable changes to this project will be documented in this file.
 - Docker configuration for development
 - Database schema and migrations
 - User authentication system
+- UI components library
