@@ -15,3 +15,4 @@ All notable changes to this project will be documented in this file.
 - User authentication system
 - UI components library
 - API documentation
+- Testing framework integration
