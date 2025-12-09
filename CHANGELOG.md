@@ -16,3 +16,4 @@ All notable changes to this project will be documented in this file.
 - UI components library
 - API documentation
 - Testing framework integration
+- CI/CD pipeline setup
