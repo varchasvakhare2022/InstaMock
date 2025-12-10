@@ -19,3 +19,4 @@ All notable changes to this project will be documented in this file.
 - CI/CD pipeline setup
 - Error handling and logging
 - Responsive design implementation
+- State management with Redux
