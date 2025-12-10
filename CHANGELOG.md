@@ -20,3 +20,4 @@ All notable changes to this project will be documented in this file.
 - Error handling and logging
 - Responsive design implementation
 - State management with Redux
+- API rate limiting
