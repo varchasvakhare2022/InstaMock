@@ -21,3 +21,4 @@ All notable changes to this project will be documented in this file.
 - Responsive design implementation
 - State management with Redux
 - API rate limiting
+- Caching mechanism with Redis
