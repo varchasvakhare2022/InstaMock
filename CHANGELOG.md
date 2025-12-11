@@ -24,3 +24,4 @@ All notable changes to this project will be documented in this file.
 - Caching mechanism with Redis
 - WebSocket support for real-time updates
 - Email notification system
+- File upload and storage
