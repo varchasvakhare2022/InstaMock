@@ -22,3 +22,4 @@ All notable changes to this project will be documented in this file.
 - State management with Redux
 - API rate limiting
 - Caching mechanism with Redis
+- WebSocket support for real-time updates
