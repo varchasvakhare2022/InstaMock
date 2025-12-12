@@ -26,3 +26,4 @@ All notable changes to this project will be documented in this file.
 - Email notification system
 - File upload and storage
 - Advanced search functionality
+- Pagination and sorting features
