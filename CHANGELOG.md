@@ -27,3 +27,4 @@ All notable changes to this project will be documented in this file.
 - File upload and storage
 - Advanced search functionality
 - Pagination and sorting features
+- Security enhancements and HTTPS
