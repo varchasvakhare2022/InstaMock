@@ -30,3 +30,4 @@ All notable changes to this project will be documented in this file.
 - Security enhancements and HTTPS
 - Mobile optimization and PWA support
 - Internationalization (i18n) support
+- Performance monitoring and analytics
