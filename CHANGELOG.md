@@ -29,3 +29,4 @@ All notable changes to this project will be documented in this file.
 - Pagination and sorting features
 - Security enhancements and HTTPS
 - Mobile optimization and PWA support
+- Internationalization (i18n) support
