@@ -28,3 +28,4 @@ All notable changes to this project will be documented in this file.
 - Advanced search functionality
 - Pagination and sorting features
 - Security enhancements and HTTPS
+- Mobile optimization and PWA support
